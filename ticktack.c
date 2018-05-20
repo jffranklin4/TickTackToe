@@ -5,16 +5,35 @@
 #include <time.h>
 
 #include <stdio.h>
+#include <ctype.h>
 
 #define BOARD_SIZE     3
+// A is 65, B is 66 etc...
+#define ASCII_OFFSET    65;
 
 struct Actor {
+    int human;
     char icon;
 };
 
-void printBoard(int board[][BOARD_SIZE]) {
+struct Cell {
+    int row;
+    int col;
+};
+
+int randInt(int max) //range : [min, max)
+{
+    static int first = 1;
+    if (first) {
+        srand(time(NULL)); //seeding for the first time only!
+        first = 0;
+    }
+    return 0 + rand() % ((max + 1));
+}
+
+void printBoard(int board[BOARD_SIZE][BOARD_SIZE]) {
     // Print column labels (A, B, C) (TODO: only for board size 3)
-    printf("\t  A\t  B\t  C");
+    printf("\n\t  A\t  B\t  C");
     printf("\n");
     for (int rows = 0; rows < BOARD_SIZE; rows++) {
         /* Print row
@@ -24,14 +43,55 @@ void printBoard(int board[][BOARD_SIZE]) {
         for (int cols = 0; cols < BOARD_SIZE; cols++) {
 
             if (cols < BOARD_SIZE - 1) {
-                printf(": %d ", board[rows][cols]);
+                printf(": %c ", board[rows][cols]);
             } else {
-                printf(": %d :", board[rows][cols]);
+                printf(": %c :", board[rows][cols]);
             }
         }
 
         printf("\n");
     }
+}
+
+struct Cell *getMove(struct Actor *actor, int board[BOARD_SIZE][BOARD_SIZE]) {
+    int invalidMove = 0;
+    struct Cell *move = malloc(sizeof *move);
+
+    do {
+        int occupiedCell = 0;
+
+        if (actor->human) {
+            int row = 0;
+            char colC = 'A';
+            int col = 0;
+            printf("Make your move (e.g. A1): ");
+            scanf("%c%d", &colC, &row);
+
+            // array indexing starts at 0
+            row = row - 1;
+
+            // ensure upper case
+            colC = toupper(colC);
+            col = (int) colC - ASCII_OFFSET;
+
+            move->row = row;
+            move->col = col;
+        } else {
+            move->row = randInt(BOARD_SIZE - 1);
+            move->col = randInt(BOARD_SIZE - 1);
+
+        }
+
+        occupiedCell = board[move->row][move->col] != 0;
+        invalidMove = occupiedCell || move->row >= BOARD_SIZE || move->col >= BOARD_SIZE;
+
+        if(actor->human && invalidMove) {
+            printf("Invalid move\n");
+        }
+
+    } while (invalidMove);
+
+    return move;
 }
 
 int main(void) {
@@ -40,20 +100,36 @@ int main(void) {
 
     struct Actor player, computer;
 
+    // Define actor props
+    player.icon = 'O';
+    player.human = 1;
+
+    computer.icon = 'X';
+    computer.human = 0;
+
     // Random start
     srand((unsigned) time(NULL));
     computerTurn = rand() % 2 - 1;        // Random number from -1 to 0, 0=Human and -1 Computer,
     // the negative number is to get complement (~) to work
+
+
     // Main game loop
     do {
         printBoard(board);
+
         if (computerTurn) {
-//            Computer(board);
+
+            struct Cell *move = getMove(&computer, board);
+
+            board[move->row][move->col] = computer.icon;
+
+            printf("\nComputer made his move, your turn!\n");
+
         } else {
-            int d;
-            scanf("%d", &d);
-            printf("%d", d);
-//            Player(board);
+
+            struct Cell *move = getMove(&player, board);
+
+            board[move->row][move->col] = player.icon;
         }
 
 //        winner = CalculateWinner(board);
