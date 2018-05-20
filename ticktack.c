@@ -9,7 +9,7 @@
 
 #define BOARD_SIZE     3
 // A is 65, B is 66 etc...
-#define ASCII_OFFSET    65;
+#define ASCII_OFFSET    65
 
 struct Actor {
     int human;
@@ -39,8 +39,10 @@ int getRandomInt() {
  * The board is printed as characters instead of integers
  */
 void printBoard(int board[BOARD_SIZE][BOARD_SIZE]) {
-    // Print column labels (A, B, C) (TODO: only for board size 3)
-    printf("\n\t  A\t  B\t  C");
+    printf("\n");
+    for (int i = 0; i < BOARD_SIZE; i++) {
+        printf("\t  %c", (ASCII_OFFSET + i));
+    }
     printf("\n");
     for (int rows = 0; rows < BOARD_SIZE; rows++) {
         /* Print row

@@ -1,0 +1,22 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/Users/tholene/git/TickTackToe/GamingBoard.c
+
+/Users/tholene/git/TickTackToe/ticktack.c
+stdio.h
+-
+stdlib.h
+-
+time.h
+-
+stdio.h
+-
+ctype.h
+-
+
