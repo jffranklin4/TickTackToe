@@ -13,7 +13,7 @@
 
 struct Actor {
     int human;
-    char icon;
+    char marker;
 };
 
 struct Cell {
@@ -21,16 +21,23 @@ struct Cell {
     int col;
 };
 
-int randInt(int max) //range : [min, max)
-{
+
+/*
+ * Get a random integer with the (board size - 1) as upper limit
+ */
+int getRandomInt() {
     static int first = 1;
     if (first) {
-        srand(time(NULL)); //seeding for the first time only!
+        srand(time(NULL)); //seed first time only!
         first = 0;
     }
-    return 0 + rand() % ((max + 1));
+    return 0 + rand() % ((BOARD_SIZE));
 }
 
+/*
+ * Print the board to stdout
+ * The board is printed as characters instead of integers
+ */
 void printBoard(int board[BOARD_SIZE][BOARD_SIZE]) {
     // Print column labels (A, B, C) (TODO: only for board size 3)
     printf("\n\t  A\t  B\t  C");
@@ -53,6 +60,11 @@ void printBoard(int board[BOARD_SIZE][BOARD_SIZE]) {
     }
 }
 
+/*
+ * Get a pointer to a Cell struct instance containing a row and col for the board
+ *
+ * @return Will always return a valid row and col for a move*
+ */
 struct Cell *getMove(struct Actor *actor, int board[BOARD_SIZE][BOARD_SIZE]) {
     int invalidMove = 0;
     struct Cell *move = malloc(sizeof *move);
@@ -67,31 +79,118 @@ struct Cell *getMove(struct Actor *actor, int board[BOARD_SIZE][BOARD_SIZE]) {
             printf("Make your move (e.g. A1): ");
             scanf("%c%d", &colC, &row);
 
+            // wipe out any '\n' from buffer
+            getchar();
+
             // array indexing starts at 0
             row = row - 1;
 
-            // ensure upper case
-            colC = toupper(colC);
-            col = (int) colC - ASCII_OFFSET;
+            // ensure upper case for ASCII_OFFSET calculation
+            col = toupper(colC) - ASCII_OFFSET;
 
             move->row = row;
             move->col = col;
         } else {
-            move->row = randInt(BOARD_SIZE - 1);
-            move->col = randInt(BOARD_SIZE - 1);
+            // Computer is just random
+            move->row = getRandomInt(BOARD_SIZE);
+            move->col = getRandomInt(BOARD_SIZE);
 
         }
 
+        // can we make a move at the current cell?
         occupiedCell = board[move->row][move->col] != 0;
+        // is the cell within the game board bounds?
         invalidMove = occupiedCell || move->row >= BOARD_SIZE || move->col >= BOARD_SIZE;
 
-        if(actor->human && invalidMove) {
+        // the computer wouldn't listen if we complained, only show to humans
+        if (actor->human && invalidMove) {
             printf("Invalid move\n");
         }
 
     } while (invalidMove);
 
     return move;
+}
+
+int calculateWinner(int board[BOARD_SIZE][BOARD_SIZE]) {
+    int winner = 0;
+
+    int recentMarker = 0;
+
+    // check horizontal
+    for (int rows = 0; rows < BOARD_SIZE; rows++) {
+        // We check one less cell than the board size
+        // a win means this value is 1
+        int rowIsWon = 1 - BOARD_SIZE + 1;
+
+        for (int cols = 1; cols < BOARD_SIZE; cols++) {
+            if (board[rows][cols] != 0 && board[rows][cols] == board[rows][cols - 1]) {
+                rowIsWon++;
+            }
+        }
+
+        if (rowIsWon > 0) {
+            winner = 1;
+            printf("Win on row %d for player %c\n", rows + 1, board[rows][0]);
+        }
+    }
+
+    // check vertical
+    for (int cols = 0; cols < BOARD_SIZE; cols++) {
+
+        int colIsWon = 1 - BOARD_SIZE + 1;
+
+        for (int rows = 1; rows < BOARD_SIZE; rows++) {
+            if (board[rows][cols] != 0 && board[rows][cols] == board[rows - 1][cols]) {
+                colIsWon++;
+            }
+        }
+
+        if (colIsWon > 0) {
+            winner = 1;
+            printf("Win on column %d for player %c\n", cols + 1, board[0][cols]);
+        }
+    }
+
+    // check diagonal
+    for (int rows = 1; rows < BOARD_SIZE; rows++) {
+        // We check one less cell than the board size
+        // a win means this value is 1
+        int diagonalIsWon = 1 - BOARD_SIZE + 1;
+
+        for (int cols = 1; cols < BOARD_SIZE; cols++) {
+
+            if (board[rows][cols] != 0 && board[rows][cols] == board[rows - 1][cols - 1]) {
+                diagonalIsWon++;
+            }
+        }
+
+        if (diagonalIsWon > 0) {
+            winner = 1;
+            printf("Win on diagonal");
+        }
+    }
+
+    // check antidiagonal
+    for (int rows = BOARD_SIZE - 1; rows > 0; rows--) {
+        // We check one less cell than the board size
+        // a win means this value is 1
+        int antidiagonalIsWon = 1 - BOARD_SIZE + 1;
+
+        for (int cols = 1; cols < BOARD_SIZE; cols++) {
+
+            if (board[rows][cols] != 0 && board[rows][cols] == board[rows + 1][cols - 1]) {
+                antidiagonalIsWon++;
+            }
+        }
+
+        if (antidiagonalIsWon > 0) {
+            winner = 1;
+            printf("Win on diagonal");
+        }
+    }
+
+    return winner;
 }
 
 int main(void) {
@@ -101,10 +200,10 @@ int main(void) {
     struct Actor player, computer;
 
     // Define actor props
-    player.icon = 'O';
+    player.marker = 'O'; // 79
     player.human = 1;
 
-    computer.icon = 'X';
+    computer.marker = 'X'; // 88
     computer.human = 0;
 
     // Random start
@@ -121,7 +220,7 @@ int main(void) {
 
             struct Cell *move = getMove(&computer, board);
 
-            board[move->row][move->col] = computer.icon;
+            board[move->row][move->col] = computer.marker;
 
             printf("\nComputer made his move, your turn!\n");
 
@@ -129,13 +228,21 @@ int main(void) {
 
             struct Cell *move = getMove(&player, board);
 
-            board[move->row][move->col] = player.icon;
+            board[move->row][move->col] = player.marker;
         }
 
-//        winner = CalculateWinner(board);
+        winner = calculateWinner(board);
         moves++;
         computerTurn = ~computerTurn;    // Complement change from 0 -> -1 or -1 -> 0
     } while (winner == 0 && moves < BOARD_SIZE * BOARD_SIZE);
+
+    printBoard(board);
+
+    if (moves >= BOARD_SIZE * BOARD_SIZE) {
+        printf("Out of moves, try again\n");
+    } else {
+        printf("Winner winner chicken dinner!!\n");
+    }
 
     return 0;
 } // End of main
