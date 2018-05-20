@@ -12,7 +12,7 @@ struct Actor {
     char icon;
 };
 
-void printBoard(int **board) {
+void printBoard(int board[][BOARD_SIZE]) {
     // Print column labels (A, B, C) (TODO: only for board size 3)
     printf("\t  A\t  B\t  C");
     printf("\n");
