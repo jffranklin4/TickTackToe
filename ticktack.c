@@ -112,6 +112,11 @@ struct Cell *getMove(struct Actor *actor, int board[BOARD_SIZE][BOARD_SIZE]) {
     return move;
 }
 
+/* Four algorithms to check for horizontal, vertical or diagonal wins
+ * A better solution would be to add scores to players during their moves
+ * and keep track of the possible winning scores in a hash table (instant lookup)
+ * but this is fine for now
+ */
 int calculateWinner(int board[BOARD_SIZE][BOARD_SIZE]) {
     int winner = 0;
 
@@ -124,6 +129,7 @@ int calculateWinner(int board[BOARD_SIZE][BOARD_SIZE]) {
         int rowIsWon = 1 - BOARD_SIZE + 1;
 
         for (int cols = 1; cols < BOARD_SIZE; cols++) {
+            // check current and previous column
             if (board[rows][cols] != 0 && board[rows][cols] == board[rows][cols - 1]) {
                 rowIsWon++;
             }
@@ -131,7 +137,6 @@ int calculateWinner(int board[BOARD_SIZE][BOARD_SIZE]) {
 
         if (rowIsWon > 0) {
             winner = 1;
-            printf("Win on row %d for player %c\n", rows + 1, board[rows][0]);
         }
     }
 
@@ -141,6 +146,7 @@ int calculateWinner(int board[BOARD_SIZE][BOARD_SIZE]) {
         int colIsWon = 1 - BOARD_SIZE + 1;
 
         for (int rows = 1; rows < BOARD_SIZE; rows++) {
+            // check current and previous row
             if (board[rows][cols] != 0 && board[rows][cols] == board[rows - 1][cols]) {
                 colIsWon++;
             }
@@ -148,18 +154,16 @@ int calculateWinner(int board[BOARD_SIZE][BOARD_SIZE]) {
 
         if (colIsWon > 0) {
             winner = 1;
-            printf("Win on column %d for player %c\n", cols + 1, board[0][cols]);
         }
     }
 
     // check diagonal
     for (int rows = 1; rows < BOARD_SIZE; rows++) {
-        // We check one less cell than the board size
-        // a win means this value is 1
-        int diagonalIsWon = 1 - BOARD_SIZE + 1;
+
+        int diagonalIsWon = 1 - BOARD_SIZE;
 
         for (int cols = 1; cols < BOARD_SIZE; cols++) {
-
+            // check same and previous diagonally (up one, left one)
             if (board[rows][cols] != 0 && board[rows][cols] == board[rows - 1][cols - 1]) {
                 diagonalIsWon++;
             }
@@ -167,18 +171,16 @@ int calculateWinner(int board[BOARD_SIZE][BOARD_SIZE]) {
 
         if (diagonalIsWon > 0) {
             winner = 1;
-            printf("Win on diagonal");
         }
     }
 
     // check antidiagonal
     for (int rows = BOARD_SIZE - 1; rows > 0; rows--) {
-        // We check one less cell than the board size
-        // a win means this value is 1
+
         int antidiagonalIsWon = 1 - BOARD_SIZE + 1;
 
         for (int cols = 1; cols < BOARD_SIZE; cols++) {
-
+            // check same and previous diagonally (down one, left one)
             if (board[rows][cols] != 0 && board[rows][cols] == board[rows + 1][cols - 1]) {
                 antidiagonalIsWon++;
             }
@@ -186,7 +188,6 @@ int calculateWinner(int board[BOARD_SIZE][BOARD_SIZE]) {
 
         if (antidiagonalIsWon > 0) {
             winner = 1;
-            printf("Win on diagonal");
         }
     }
 
@@ -210,7 +211,6 @@ int main(void) {
     srand((unsigned) time(NULL));
     computerTurn = rand() % 2 - 1;        // Random number from -1 to 0, 0=Human and -1 Computer,
     // the negative number is to get complement (~) to work
-
 
     // Main game loop
     do {
@@ -238,10 +238,15 @@ int main(void) {
 
     printBoard(board);
 
-    if (moves >= BOARD_SIZE * BOARD_SIZE) {
+    if (moves >= BOARD_SIZE * BOARD_SIZE && !winner) {
         printf("Out of moves, try again\n");
     } else {
-        printf("Winner winner chicken dinner!!\n");
+        // if it's the computers turn now, you did the winning move
+        if (computerTurn) {
+            printf("Winner winner chicken dinner!!\n");
+        } else {
+            printf("Better luck next time!\n");
+        }
     }
 
     return 0;
